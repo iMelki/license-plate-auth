@@ -141,12 +141,26 @@ const sevenLongCaseC = (vehicleNumber) => {
     return {ans: false};
 }
 
+const isOperatedByGas = (vehicleNumber) => {
+    if (vehicleNumber.length != 7 && vehicleNumber.length != 8) 
+        return false;
+
+    let sum = 0;    
+    for (let i = 0; i < vehicleNumber.length; i++) {
+        if (vehicleNumber.charCodeAt(i)<48 || vehicleNumber.charCodeAt(i)>57) 
+            return false;
+        sum+=vehicleNumber.charAt(i);
+    }
+    
+    if(sum%7 == 0) return true;
+}
+
 const isAuthorizedVehicle = (vehicleNumber) => {
     if (isPublicTransportVehicle(vehicleNumber)) return "Public Transportation Vehicle";
     if (isLawEnforcementVehicle(vehicleNumber)) return "Law Enforcement Vehicle";
-    const caseC = sevenLongCaseC('1234500');
+    const caseC = sevenLongCaseC(vehicleNumber);
     if (caseC.ans) return "7 digit number and last two digits are ".concat(caseC.lastTwoDigits);
-    // if (isOperatedByGas(vehicleNumber)) return "Public Transportation Vehicle";
+    if (isOperatedByGas(vehicleNumber)) return "Vehicle Suspected as Operated by Gas";
     return "Allowed";
 }
 
