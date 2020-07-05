@@ -1,13 +1,27 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const debug = require('debug')('server');
+const knex = require('knex');
 
 const indexRouter = require('./routes/index');
 const LPAuthRouter = require('./routes/license-plate-auth');
 
-const app = express();
+//Set up DB connection:
+const DB_URL = process.env.DB_URL;
+DB_URL = '127.0.0.1';
 
-//TODO: Set up DB connection
+const postgres = knex({
+  client: 'pg',
+  connection: {
+    host : DB_URL,
+    user : 'postgres',
+    password : 'admin',
+    database : 'license-plate-auth'
+  }
+});
+
+const PORT = process.env.PORT;
+const app = express();
 
 app.use( bodyParser.json() );       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
@@ -24,7 +38,7 @@ app.use('/license-plate-auth', LPAuthRouter);
 //     res.send('Hi');
 // });
 
-app.listen(3000, () => {
+app.listen(PORT, () => {
     debug("Hi");
-    console.log('app is running on port 3000');
+    console.log(`app is running on port ${PORT}`);
 });

@@ -11,15 +11,6 @@ exports.index = function(req, res) {
 
 //const getUrlParamFromGetReq = (req) => req.query.url;
 
-exports.check_license_plate = function(req, res) {   
-    //const url = req.body.url;
-    //const {url} = req.query;
-    //debug(req.query);
-    //debug(url);
-    debug(req.body);
-    res.send(req.body);
-};
-
 //This function get a URL of a license plate picture
 //and returns an object with the resulting vehicle number or error in parsedText
 const imgToText = async (url) => {
@@ -167,6 +158,31 @@ const isAuthorizedVehicle = (vehicleNumber) => {
 exports.check_license_plate_httpGet = async function(req, res) {   
     var responseString = "";
     const {url} = req.query;
+    debug(url);
+
+    //TODO: maybe check whether is a valid vehicle number?
+    
+    //Get License Plate string out of picture:
+    const licensePlateTextObject = await imgToText(url);
+    if (licensePlateTextObject.GotError){
+        responseString = licensePlateTextObject.parsedText;
+    }else{
+        const vehicleNumber = licensePlateTextToVehicleNumber(licensePlateTextObject.parsedText);
+        debug(vehicleNumber);
+        
+        //Check and Decide by a,b,c,d:
+        const decision = isAuthorizedVehicle(vehicleNumber);
+
+        //Write the decision into the DB, with timestamp & reason (if prohibited)
+        responseString = vehicleNumber + " : "+ decision;
+    }
+    res.send(responseString);
+};
+
+
+exports.check_license_plate = async function(req, res) {   
+    var responseString = "";
+    const {url} = req.body;
     debug(url);
 
     //TODO: maybe check whether is a valid vehicle number?
