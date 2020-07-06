@@ -24,6 +24,7 @@ const imgToText = async (url) => {
     data.append('url', url);
     data.append('iscreatesearchablepdf', 'false');
     data.append('issearchablepdfhidetextlayer', 'false');
+    data.append('OCREngine', '2');
 
     const config = {
         method: 'post',
@@ -53,12 +54,16 @@ const imgToText = async (url) => {
 }
 
 const licensePlateTextToVehicleNumber = (licensePlate) => {
+    const endOfVehicleNumber = licensePlate.indexOf('\\');
+    licensePlate = licensePlate.slice(0,endOfVehicleNumber);
     var ans = "";
     for (let i = 0; i < licensePlate.length; i++) {
         const char = licensePlate.charAt(i);
         if (char>=0 && char<=9 || char>='A' && char<='Z')
             ans = ans.concat(char);
     }
+    if (ans.length>9) 
+        ans = ans.slice(0,8);
     return ans;
 }
 
@@ -130,19 +135,22 @@ exports.check_license_plate = async function(req, res) {
         responseString = licensePlateTextObject.parsedText;
     }else{
         const vehicleNumber = licensePlateTextToVehicleNumber(licensePlateTextObject.parsedText);
-        
-        //Check and Decide by a,b,c,d:
-        const decision = isAuthorizedVehicle(vehicleNumber);
+        if (vehicleNumber.length<3){
+            responseString = "Invalid license plate # or picture not recognised - plate #: "+vehicleNumber;
+        }else{
+            //Check and Decide by a,b,c,d:
+            const decision = isAuthorizedVehicle(vehicleNumber);
 
-        responseString = vehicleNumber + " is "+ decision.decision + " (" + decision.reason + ")";
-        
-        //Write the decision into the DB, with timestamp & reason (if prohibited)
-        await dbService.addToDB({
-            time: new Date(),
-            id: vehicleNumber,
-            decision: decision.decision,
-            reason: decision.reason
-        });
+            responseString = vehicleNumber + " is "+ decision.decision + " (" + decision.reason + ")";
+            
+            //Write the decision into the DB, with timestamp & reason (if prohibited)
+            await dbService.addToDB({
+                time: new Date(),
+                id: vehicleNumber,
+                decision: decision.decision,
+                reason: decision.reason
+            });
+        }
     }
     res.send(responseString);
 };
