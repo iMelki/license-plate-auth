@@ -1,22 +1,34 @@
-//const debug = require('debug')('server');
+const debug = require('debug')('db');
 const knex = require('knex');
 
 //Set up DB connection:
-//const DB_URL = process.env.DB_URL;
 const DB_URL = process.env.DATABASE_URL || '127.0.0.1';
+let db;
 
-const postgres = knex({
-  client: 'pg',
-  connection: {
-    connectionString : DB_URL
-    //ssl = true
-  }
-});
+if (DB_URL == '127.0.0.1'){
+  db = knex({
+    client: 'pg',
+    connection: {
+      host : DB_URL,
+      user : 'postgres',
+      password : 'admin',
+      database : 'postgres'
+    }
+  });
+}else{
+  db = knex({
+    client: 'pg',
+    connection: {
+      connectionString : DB_URL
+      //ssl = true
+    }
+  });
+}
 
 exports.addToDB = async function(record) {
-  DB_URL('decisions').insert(record);
+  await db('decisions').insert(record);
 }; 
 
 exports.getAllRecords = async function() {
-  postgres.select('*').from('decisions').then(data=>data);
+  return await db.select('*').from('decisions');
 }; 

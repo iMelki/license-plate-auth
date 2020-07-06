@@ -17,12 +17,10 @@ const imgToText = async (url) => {
         GotError: false,
         parsedText: ""
     };
-    debug("imgToText: url =", url);
     // COPY FROM WEBSITE:
     var data = new FormData();
     data.append('language', 'eng');
     data.append('isOverlayRequired', 'false');
-    //TODO: Get URL from parameter at the top:
     data.append('url', url);
     data.append('iscreatesearchablepdf', 'false');
     data.append('issearchablepdfhidetextlayer', 'false');
@@ -39,49 +37,22 @@ const imgToText = async (url) => {
 
     await axios(config)
     .then(function (response) {
-        debug("imgToText: response.data =", response.data);
         if (response.data.IsErroredOnProcessing){
             answer.GotError = true;
             answer.parsedText = response.data.ErrorMessage;
         }else{ 
             answer.parsedText = JSON.stringify(response.data.ParsedResults[0].ParsedText);
         }
-        debug("imgToText: parsedText =", answer.parsedText);
     })
     .catch(function (error) {
         answer.GotError = true;
         answer.parsedText = error;
-        debug("imgToText Error: parsedText =", parsedText);
     });
     
-    debug("imgToText returns: ", answer.parsedText);
     return answer;
-}
-    
-
-const imgToText_OLD = () => {
-    //Send POST Req w URL & APIKey to OCR :
-    // const headers = {
-    //     'apikey': '61d195488d88957'
-    // }
-
-    // axios.post('https://api.ocr.space/parse/image', {
-    //     url: 'http://dl.a9t9.com/ocrbenchmark/eng.png'
-    //   },  {
-    //     headers: headers
-    //   })
-    //   .then((res) => {
-
-    //     console.log(`statusCode: ${res.statusCode}`)
-    //     console.log(res)
-    //   })
-    //   .catch((error) => {
-    //     console.error(error)
-    //   })
 }
 
 const licensePlateTextToVehicleNumber = (licensePlate) => {
-    debug("licensePlateTextToVehicleNumber: ", licensePlate);
     var ans = "";
     for (let i = 0; i < licensePlate.length; i++) {
         const char = licensePlate.charAt(i);
@@ -89,13 +60,6 @@ const licensePlateTextToVehicleNumber = (licensePlate) => {
             ans = ans.concat(char);
     }
     return ans;
-}
-
-const licensePlateTextToVehicleNumberOld = (licensePlate) => {
-    debug("licensePlateTextToVehicleNumber: ", licensePlate);
-    const endOfVehicleNumber = licensePlate.indexOf('\\');
-    debug("endOfVehicleNumber = ", endOfVehicleNumber);
-    return licensePlate.slice(1,endOfVehicleNumber);
 }
 
 const lastTwoDigits = (vehicleNumber) => {
@@ -144,45 +108,22 @@ const isOperatedByGas = (vehicleNumber) => {
 }
 
 const isAuthorizedVehicle = (vehicleNumber) => {
-    if (isPublicTransportVehicle(vehicleNumber)) return {decision: "Prohibited", reason: "Public Transportation Vehicle"};
-    if (isLawEnforcementVehicle(vehicleNumber)) return {decision: "Prohibited", reason: "Law Enforcement Vehicle"};
+    if (isPublicTransportVehicle(vehicleNumber)) 
+        return {decision: "Prohibited", reason: "Public Transportation Vehicle"};
+    if (isLawEnforcementVehicle(vehicleNumber)) 
+        return {decision: "Prohibited", reason: "Law Enforcement Vehicle"};
     const caseC = sevenLongCaseC(vehicleNumber);
-    if (caseC.ans) return {decision: "Prohibited", reason: "7 digit number and last two digits are ".concat(caseC.lastTwoDigits)};
-    if (isOperatedByGas(vehicleNumber)) return {decision: "Prohibited", reason: "Vehicle Suspected as Operated by Gas"};
+    if (caseC.ans) 
+        return {decision: "Prohibited", reason: "7 digit number and last two digits are ".concat(caseC.lastTwoDigits)};
+    if (isOperatedByGas(vehicleNumber)) 
+        return {decision: "Prohibited", reason: "Vehicle Suspected as Operated by Gas"};
     return {decision: "Allowed", reason: "Passed all checks"};
 }
-
-exports.check_license_plate_httpGet = async function(req, res) {   
-    var responseString = "";
-    const {url} = req.query;
-    debug(url);
-
-    //TODO: maybe check whether is a valid vehicle number?
-    
-    //Get License Plate string out of picture:
-    const licensePlateTextObject = await imgToText(url);
-    if (licensePlateTextObject.GotError){
-        responseString = licensePlateTextObject.parsedText;
-    }else{
-        const vehicleNumber = licensePlateTextToVehicleNumber(licensePlateTextObject.parsedText);
-        debug(vehicleNumber);
-        
-        //Check and Decide by a,b,c,d:
-        const decision = isAuthorizedVehicle(vehicleNumber);
-
-        //Write the decision into the DB, with timestamp & reason (if prohibited)
-        responseString = vehicleNumber + " : "+ decision;
-    }
-    res.send(responseString);
-};
-
 
 exports.check_license_plate = async function(req, res) {   
     var responseString = "";
     const {url} = req.body;
-    
-    //TODO: maybe check whether is a valid vehicle number?
-    
+        
     //Get License Plate string out of picture:
     const licensePlateTextObject = await imgToText(url);
     if (licensePlateTextObject.GotError){
@@ -193,11 +134,11 @@ exports.check_license_plate = async function(req, res) {
         //Check and Decide by a,b,c,d:
         const decision = isAuthorizedVehicle(vehicleNumber);
 
+        responseString = vehicleNumber + " is "+ decision.decision + " (" + decision.reason + ")";
+        
         //Write the decision into the DB, with timestamp & reason (if prohibited)
-        responseString = vehicleNumber + " is "+ decision.decision + "(" + decision.reason + ")";
-        // TODO: add to DB!!!
-        dbService.addToDB({
-            time: new Date(),//.toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+        await dbService.addToDB({
+            time: new Date(),
             id: vehicleNumber,
             decision: decision.decision,
             reason: decision.reason
