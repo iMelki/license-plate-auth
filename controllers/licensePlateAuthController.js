@@ -12,7 +12,7 @@ exports.index = function(req, res) {
 
 //This function gets a URL of a license plate picture
 //and returns an object with the resulting vehicle number or error in parsedText
-const imgToText = async (url) => {
+const imgToText = async (url, ocrEngine) => {
     var answer = {
         GotError: false,
         parsedText: ""
@@ -24,7 +24,7 @@ const imgToText = async (url) => {
     data.append('url', url);
     data.append('iscreatesearchablepdf', 'false');
     data.append('issearchablepdfhidetextlayer', 'false');
-    data.append('OCREngine', '2');
+    data.append('OCREngine', ocrEngine);
 
     const config = {
         method: 'post',
@@ -106,10 +106,10 @@ const isOperatedByGas = (vehicleNumber) => {
     for (let i = 0; i < vehicleNumber.length; i++) {
         if (vehicleNumber.charCodeAt(i)<48 || vehicleNumber.charCodeAt(i)>57) 
             return false;
-        sum+=vehicleNumber.charAt(i);
+        sum+=(vehicleNumber.charCodeAt(i)-48);
     }
-    
-    if(sum%7 == 0) return true;
+    console.log("sum = "+sum);
+    if(sum % 7 == 0) return true;
 }
 
 const isAuthorizedVehicle = (vehicleNumber) => {
@@ -130,11 +130,16 @@ exports.check_license_plate = async function(req, res) {
     const {url} = req.body;
         
     //Get License Plate string out of picture:
-    const licensePlateTextObject = await imgToText(url);
+    let licensePlateTextObject = await imgToText(url, '2');
     if (licensePlateTextObject.GotError){
         responseString = licensePlateTextObject.parsedText;
     }else{
-        const vehicleNumber = licensePlateTextToVehicleNumber(licensePlateTextObject.parsedText);
+        let vehicleNumber = licensePlateTextToVehicleNumber(licensePlateTextObject.parsedText);
+        if(vehicleNumber.length<3){
+            //try the 1st OCR Engine:
+            licensePlateTextObject = await imgToText(url, '1');
+            vehicleNumber = licensePlateTextToVehicleNumber(licensePlateTextObject.parsedText);
+        }
         if (vehicleNumber.length<3){
             responseString = "Invalid license plate # or picture not recognised - plate #: "+vehicleNumber;
         }else{
