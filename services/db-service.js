@@ -8,8 +8,8 @@ const DB_URL = process.env.DATABASE_URL || '127.0.0.1';
 const postgres = knex({
   client: 'pg',
   connection: {
-    connectionString : DB_URL,
-    ssl = true
+    connectionString : DB_URL
+    //ssl = true
   }
 });
 
