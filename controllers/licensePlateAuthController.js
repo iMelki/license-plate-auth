@@ -1,6 +1,6 @@
 
 const axios = require('axios');
-const debug = require('debug')('LPAuthCtrl');
+//const debug = require('debug')('LPAuthCtrl');
 const FormData = require('form-data');
 // const async = require('async');
 
@@ -10,7 +10,7 @@ exports.index = function(req, res) {
     res.send('LPAuth');
 };
 
-//This function get a URL of a license plate picture
+//This function gets a URL of a license plate picture
 //and returns an object with the resulting vehicle number or error in parsedText
 const imgToText = async (url) => {
     var answer = {
@@ -85,11 +85,9 @@ const licensePlateTextToVehicleNumber = (licensePlate) => {
     var ans = "";
     for (let i = 0; i < licensePlate.length; i++) {
         const char = licensePlate.charAt(i);
-        //debug("ch = ", char);
         if (char>=0 && char<=9 || char>='A' && char<='Z')
             ans = ans.concat(char);
     }
-    //debug("ans = ", ans);
     return ans;
 }
 
