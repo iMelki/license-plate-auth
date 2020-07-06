@@ -30,5 +30,5 @@ exports.addToDB = async function(record) {
 }; 
 
 exports.getAllRecords = async function() {
-  return await db.select('*').from('decisions');
+  return await db.select('*').from('decisions').limit(1000).orderBy('time', 'desc');
 }; 
