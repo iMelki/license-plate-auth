@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 //const debug = require('debug')('server');
-const knex = require('knex');
+//const knex = require('knex');
 
 const indexRouter = require('./routes/index');
 const LPAuthRouter = require('./routes/license-plate-auth');
