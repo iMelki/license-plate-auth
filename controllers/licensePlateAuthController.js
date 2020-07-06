@@ -2,14 +2,13 @@
 const axios = require('axios');
 const debug = require('debug')('LPAuthCtrl');
 const FormData = require('form-data');
-
 // const async = require('async');
+
+const dbService = require('../services/db-service');
 
 exports.index = function(req, res) {   
     res.send('LPAuth');
 };
-
-//const getUrlParamFromGetReq = (req) => req.query.url;
 
 //This function get a URL of a license plate picture
 //and returns an object with the resulting vehicle number or error in parsedText
@@ -147,12 +146,12 @@ const isOperatedByGas = (vehicleNumber) => {
 }
 
 const isAuthorizedVehicle = (vehicleNumber) => {
-    if (isPublicTransportVehicle(vehicleNumber)) return "Public Transportation Vehicle";
-    if (isLawEnforcementVehicle(vehicleNumber)) return "Law Enforcement Vehicle";
+    if (isPublicTransportVehicle(vehicleNumber)) return {decision: "Prohibited", reason: "Public Transportation Vehicle"};
+    if (isLawEnforcementVehicle(vehicleNumber)) return {decision: "Prohibited", reason: "Law Enforcement Vehicle"};
     const caseC = sevenLongCaseC(vehicleNumber);
-    if (caseC.ans) return "7 digit number and last two digits are ".concat(caseC.lastTwoDigits);
-    if (isOperatedByGas(vehicleNumber)) return "Vehicle Suspected as Operated by Gas";
-    return "Allowed";
+    if (caseC.ans) return {decision: "Prohibited", reason: "7 digit number and last two digits are ".concat(caseC.lastTwoDigits)};
+    if (isOperatedByGas(vehicleNumber)) return {decision: "Prohibited", reason: "Vehicle Suspected as Operated by Gas"};
+    return {decision: "Allowed", reason: "Passed all checks"};
 }
 
 exports.check_license_plate_httpGet = async function(req, res) {   
@@ -183,8 +182,7 @@ exports.check_license_plate_httpGet = async function(req, res) {
 exports.check_license_plate = async function(req, res) {   
     var responseString = "";
     const {url} = req.body;
-    debug(url);
-
+    
     //TODO: maybe check whether is a valid vehicle number?
     
     //Get License Plate string out of picture:
@@ -193,13 +191,19 @@ exports.check_license_plate = async function(req, res) {
         responseString = licensePlateTextObject.parsedText;
     }else{
         const vehicleNumber = licensePlateTextToVehicleNumber(licensePlateTextObject.parsedText);
-        debug(vehicleNumber);
         
         //Check and Decide by a,b,c,d:
         const decision = isAuthorizedVehicle(vehicleNumber);
 
         //Write the decision into the DB, with timestamp & reason (if prohibited)
-        responseString = vehicleNumber + " : "+ decision;
+        responseString = vehicleNumber + " is "+ decision.decision + "(" + decision.reason + ")";
+        // TODO: add to DB!!!
+        dbService.addToDB({
+            time: new Date(),//.toISOString().replace(/T/, ' ').replace(/\..+/, ''),
+            id: vehicleNumber,
+            decision: decision.decision,
+            reason: decision.reason
+        });
     }
     res.send(responseString);
 };
