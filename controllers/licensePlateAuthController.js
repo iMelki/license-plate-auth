@@ -108,7 +108,6 @@ const isOperatedByGas = (vehicleNumber) => {
             return false;
         sum+=(vehicleNumber.charCodeAt(i)-48);
     }
-    console.log("sum = "+sum);
     if(sum % 7 == 0) return true;
 }
 
@@ -151,7 +150,7 @@ exports.check_license_plate = async function(req, res) {
             //Write the decision into the DB, with timestamp & reason (if prohibited)
             await dbService.addToDB({
                 time: new Date(),
-                id: vehicleNumber,
+                license_plate: vehicleNumber,
                 decision: decision.decision,
                 reason: decision.reason
             });

@@ -17,6 +17,20 @@ holding a url to a license plate picture, i.e.:
 }
 ```
   
+### Image Examples:
+#### Allowed:
+```
+https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Israeli_reg_6732.JPG/250px-Israeli_reg_6732.JPG
+
+https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Plak-IL-Shakhsi-15x30.svg/300px-Plak-IL-Shakhsi-15x30.svg.png
+```
+#### Prohibited:
+```
+https://images-na.ssl-images-amazon.com/images/I/71eL6QqzLBL._AC_SL1500_.jpg
+
+https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/License_plate_of_the_Palestinian_territories_new-old.svg/400px-License_plate_of_the_Palestinian_territories_new-old.svg.png
+```
+
 
 ## Author
 * **iMelki** 
